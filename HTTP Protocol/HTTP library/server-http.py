@@ -7,7 +7,7 @@ PORT = 8002
 
 
 # HTTPRequestHandler class
-class testHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
+class manzana(http.server.BaseHTTPRequestHandler):
     # GET
     def do_GET(self):
         # Send response status code
@@ -26,7 +26,7 @@ class testHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
 
 # Handler = http.server.SimpleHTTPRequestHandler
-Handler = testHTTPRequestHandler
+Handler = manzana
 
 httpd = socketserver.TCPServer((IP, PORT), Handler)
 print("serving at port", PORT)
