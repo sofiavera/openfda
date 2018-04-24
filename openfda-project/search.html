@@ -4,11 +4,20 @@
     <title>Search OpenFDA</title>
 </head>
 <body>
-    <h1>Search OpenFDA Application</h1>
-<form action="search">
-    Drug Label : <input name = "label" type ="text"><br>
-    Limit : <input name = "limit" type = "text"><br>
+<h1>Search OpenFDA Application</h1>
+<form action="searchDrug">
+    Active Ingredient: <input name = "active_ingredient" type ="text"><br>
     <input type="submit">
+</form>
+<form action="searchCompany">
+    Company: <input name = "company" type ="text"><br>
+    <input type="submit">
+</form>
+<form action="listDrugs">
+    List Drugs: <input type="submit">
+</form>
+<form action="listCompanies">
+    List Companies: <input type="submit">
 </form>
 </body>
 </html>
