@@ -113,7 +113,6 @@ class testHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             with open('empty.html', 'r') as f:
                 file = f.read()
                 self.wfile.write(bytes(file, "utf8"))
-                print("aaag")
 Handler = testHTTPRequestHandler
 
 httpd = socketserver.TCPServer(("", PORT), Handler)
