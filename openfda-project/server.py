@@ -20,7 +20,7 @@ class testHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                 headers = {'User-Agent': 'http-client'}
                 conn = http.client.HTTPSConnection("api.fda.gov")
                 input = self.path.split("=")
-                url ="/drug/label.json?search=active_ingredient:" + input[1] + "=" + input[2]
+                url = "/drug/label.json?search=active_ingredient:" + input[1] + "=" + input[2]
                 conn.request("GET", url, None, headers)
                 r1 = conn.getresponse()
                 drugs_raw = r1.read().decode("utf-8")
