@@ -7,8 +7,9 @@ socketserver.TCPServer.allow_reuse_address = True
 IP = "localhost"
 PORT = 8000
 
+
 class OpenFDAClient():
-    def url_drugs(self, active_ingredient, limit):
+    def search_drugs(self, active_ingredient, limit):
         headers = {'User-Agent': 'http-client'}
         conn = http.client.HTTPSConnection("api.fda.gov")
         url = "/drug/label.json?" + "search=active_ingredient:" + active_ingredient + "&limit=" + limit
@@ -18,9 +19,10 @@ class OpenFDAClient():
         drugs_raw = r1.read().decode("utf-8")
         conn.close()
 
-        search = json.loads(drugs_raw)
-        return search
-    def url_companies(self, manufacturer_name, limit):
+        search_drugs = json.loads(drugs_raw)
+        return search_drugs
+
+    def search_companies(self, manufacturer_name , limit):
         headers = {'User-Agent': 'http-client'}
         conn = http.client.HTTPSConnection("api.fda.gov")
         url = "/drug/label.json?" + "search=active_ingredient:" + manufacturer_name + "&limit=" + limit
@@ -30,44 +32,50 @@ class OpenFDAClient():
         drugs_raw = r1.read().decode("utf-8")
         conn.close()
 
-        search = json.loads(drugs_raw)
-        return search
-    def url_lists(self, limit):
-        headers = {'User-Agent': 'http-client'}
-        conn = http.client.HTTPSConnection("api.fda.gov")
-        url = "/drug/label.json?limit=" + limit
-        conn.request("GET", url, None, headers)
+        search_companies = json.loads(drugs_raw)
+        return search_companies
 
-        r1 = conn.getresponse()
-        drugs_raw = r1.read().decode("utf-8")
-        conn.close()
-
-        lists = json.loads(drugs_raw)
+    def lists(self, limit):
+        query = "limit=" + limit
+        lists = self.get_url(query)
         return lists
+
 class OpenFDAParser():
-    def data_drugs(self, search):
-        list = []
-        try:
-            for i in range(len(search['results'])):
-                list.append(search['results'][i]['active_ingredient'][0])
-        except KeyError:
-            list.append("Unknown")
-        return list
-    def data_companies(self, search):
+    def parser_drugs(self, drugs):
         list = []
         try:
             for i in range(len(drugs['results'])):
-                list.append(drugs['results'][i]['openfda']['manufacturer_name'][0])
+                list.append(drugs['results'][i]['active_ingredient'][0])
         except KeyError:
             list.append("Unknown")
         return list
-    def data_warnings(self,lists):
+
+    def parser_company(self, search_companies):
+        list = []
         try:
-            for i in range(len(drugs['results'])):
-                list.append(drugs['results'][i]['warnings'][0])
+            for i in range(len(search_companies['results'])):
+                list.append(search_companies['results'][i]['openfda']['manufacturer_name'][0])
         except KeyError:
-            list.append("Unknown")
+            list.append("unknown")
+
         return list
+
+    def parse_warnings(self, info):
+
+        warning_list = []
+
+        for i in range(len(info['results'])):
+            try:
+                if "warnings" in info["results"][i]:
+                    warning_list.append(info['results'][i]['warnings'][0])
+                else:
+                    warning_list.append("Unknown")
+            except KeyError:
+                warning_list.append("Unknown")
+                continue
+
+        return warning_list
+
 
 class OpenFDAHTML():
     def write_data(self, list):
@@ -81,6 +89,8 @@ class OpenFDAHTML():
         with open('empty.html', 'r') as f:
             file = f.read()
         return file
+
+
 
 class testHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
@@ -118,59 +128,75 @@ class testHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             with open("search.html", "r") as f:
                 message = f.read()
                 self.wfile.write(bytes(message, "utf8"))
-        elif "searchDrug" in path:
+        elif 'searchDrug' in self.path:
             print("kk")
-            input = self.path.split("=")
-            active_ingredient = input[1].split("&")[0]
-            if input[2]=='':
+            input = path.split("=")
+            if path.split("=")[2] == '':
                 limit = '10'
             else:
-                limit = input[2]
-            search = client.url_drugs(active_ingredient, limit)
-            list = parser.data_drugs(search)
-            final = HTML.write_data(list)
-            self.wfile.write(bytes(final, "utf8"))
-        elif "searchCompany" in path:
-            input = self.path.split("=")
-            manufacturer_name = input[1].split("&")[0]
-            if input[2]=='':
-                limit = '10'
+                limit = path.split("=")[2]
+            search_drugs = client.search_drugs(active_ingredient, limit)
+            drugs_list = parser.parser_drugs(search_drugs)
+            contents = HTML.write_data(drugs_list)
+            self.wfile.write(bytes(contents, "utf8"))
+
+        elif 'searchCompany' in path:
+            manufacturer_name = path.split("=")[1].split("&")[0]
+            if 'limit' in path:
+                limit = path.split("=")[2]
             else:
-                limit = input[2]
-            search = client.url_companies(manufacturer_name, limit)
-            list = parser.data_companies(search)
-            final = HTML.write_data(list)
-            self.wfile.write(bytes(final, "utf8"))
-        elif "listDrugs" in path:
-            input = self.path.split("=")
-            if input[2] == '':
                 limit = '10'
+            search_company = client.search_companies(manufacturer_name, limit)
+            company_list = parser.parser_company(search_company)
+            contents = HTML.write_data (company_list)
+            self.wfile.write(bytes(contents, "utf8"))
+
+        elif 'listDrugs' in path:
+            if 'limit' in path:
+                limit = path.split("=")[1].split("&")[0]
             else:
-                limit = input[2]
-            lists = client.url_lists(limit)
-            list = parser.data_drugs(lists)
-            final = HTML.write_data(list)
-            self.wfile.write(bytes(final, "utf8"))
-        elif "listCompanies" in path:
-            input = self.path.split("=")
-            if input[2] == '':
                 limit = '10'
+            info = client.list_drugs(limit)
+            drugs_list = parser.parser_drugs(self, info)
+            contents = HTML.write_data(self, drugs_list)
+            self.wfile.write(bytes(contents, "utf8"))
+
+        elif 'listCompanies' in path:
+            if 'limit' in path:
+                limit = path.split("=")[1].split("&")[0]
             else:
-                limit = input[2]
-            lists = client.url_lists(limit)
-            list = parser.data_companies(lists)
-            final = HTML.write_data(list)
-            self.wfile.write(bytes(final, "utf8"))
-        elif "listWarnings" in path:
-            input = self.path.split("=")
-            if input[2] == '':
                 limit = '10'
+            info = client.list_drugs(limit)
+            drugs_list = parser.parser_company(self, info)
+            contents = HTML.write_data(self, drugs_list)
+            self.wfile.write(bytes(contents, "utf8"))
+
+        elif 'listCompanies' in path:
+            print('Client request: listCompanies')
+            if 'limit' in path:
+                limit = path.split("=")[1].split("&")[0]
+                if limit == '':
+                    limit = 10
             else:
-                limit = input[2]
-            lists = client.url_lists(limit)
-            list = parser.data_warnings(lists)
-            final = HTML.write_data(list)
-            self.wfile.write(bytes(final, "utf8"))
+                limit = '10'
+            info = client.list_drugs(limit)
+            drugs_list = parser.parse_companies(self, info)
+            contents = html.build_html(self, drugs_list)
+            self.wfile.write(bytes(contents, "utf8"))
+
+        elif 'listWarnings' in path:
+            print('Client request: listWarnings')
+            if 'limit' in path:
+                limit = path.split("=")[1].split("&")[0]
+                if limit == '':
+                    limit = 10
+            else:
+                limit = '10'
+            info = client.list_drugs(limit)
+            warning_list = parser.parse_warnings(self, info)
+            contents = html.build_html(self, warning_list)
+            self.wfile.write(bytes(contents, "utf8"))
+
         elif 'secret' in path:
             status_code = 401
             print('Status code:' + str(status_code))
