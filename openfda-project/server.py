@@ -122,7 +122,7 @@ class testHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             print("kk")
             input = self.path.split("=")
             active_ingredient = input[1].split("&")[0]
-            if input[2]=='':
+            if "limit" not in path or input[2]=='':
                 limit = '10'
             else:
                 limit = input[2]
@@ -153,7 +153,7 @@ class testHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             self.wfile.write(bytes(final, "utf8"))
         elif "listCompanies" in path:
             input = self.path.split("=")
-            if input[2] == '':
+            if "limit" not in path or input[2] == '':
                 limit = '10'
             else:
                 limit = input[2]
@@ -163,7 +163,7 @@ class testHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             self.wfile.write(bytes(final, "utf8"))
         elif "listWarnings" in path:
             input = self.path.split("=")
-            if input[2] == '':
+            if "limit" not in path or input[2] == '':
                 limit = '10'
             else:
                 limit = input[2]
