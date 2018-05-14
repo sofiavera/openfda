@@ -8,15 +8,20 @@ PORT = 8000
 
 
 class OpenFDAClient():
-    def get_url(self, first_param, limit):
+    def get_petition(self, petition):
         headers = {'User-Agent': 'http-client'}
         conn = http.client.HTTPSConnection("api.fda.gov")
-        url = "/drug/label.json?" + first_param + "=" + limit
+        url = "/drug/label.json?search=" + petition
         conn.request("GET", url, None, headers)
         r1 = conn.getresponse()
         drugs_raw = r1.read().decode("utf-8")
         conn.close()
         drugs = json.loads(drugs_raw)
+    def get_search(self, first_param, limit):
+        petition = first_param + "&limit=" + limit
+        info = self.getpetition(petition)
+        return info
+
 
 class OpenFDAParser():
     def get_data(self, path):
@@ -48,24 +53,30 @@ class testHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-type', 'text/html')
         self.end_headers()
+        client = OpenFDAClient()
+        parser = OpenFDAParser()
+        HTML = OpenFDAHTML()
 
         if self.path == "/":
             with open("search.html", "r") as f:
                 message = f.read()
                 self.wfile.write(bytes(message, "utf8"))
-        elif "searchDrug" in self.path:
-            FDAClient = OpenFDAClient()
-            FDAClient.get_url(self.path.split("=")[1].split("&")[0], self.path.split("=")[2])
+        elif "search" in self.path:
+            if "&" in self.path:
+                first_param = self.path.split("=")[1].split("&")[0]
+                limit = self.path.split("=")[2]
+            else:
+                first_param = self.path.split("=")[1]
+                limit = 10
+            client.url_search(first_param, limit)
             if "searchDrug" in self.path:
                 path = 'active_ingredient'
                 path1 = ''
             elif "searchCompany" in self.path:
                 path = 'openfda'
                 path1 = 'manufacturer_name'
-            FDAParser = OpenFDAParser()
-            FDAParser.get_data(path)
-            FDAHTML = OpenFDAHTML()
-            FDAHTML.write_data()
+            parser.get_data(drugs, path)
+            HTML.write_data()
 
 
 
