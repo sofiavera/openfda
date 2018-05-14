@@ -8,23 +8,18 @@ PORT = 8000
 
 
 class OpenFDAClient():
-    def get_petition(self, petition):
+    def url_search(self, first_param, limit):
         headers = {'User-Agent': 'http-client'}
         conn = http.client.HTTPSConnection("api.fda.gov")
-        url = "/drug/label.json?search=" + petition
+        url = "/drug/label.json?search=" + first_param + "=" + limit
         conn.request("GET", url, None, headers)
         r1 = conn.getresponse()
         drugs_raw = r1.read().decode("utf-8")
         conn.close()
         drugs = json.loads(drugs_raw)
-    def get_search(self, first_param, limit):
-        petition = first_param + "&limit=" + limit
-        info = self.getpetition(petition)
-        return info
-
 
 class OpenFDAParser():
-    def get_data(self, path):
+    def get_data(self, drugs, path):
         list = []
         try:
             for i in range(len(drugs['results'])):
@@ -36,17 +31,17 @@ class OpenFDAParser():
             list.append("unknown")
 
 class OpenFDAHTML():
-    def write_data(self):
+    def write_data(self, parser):
         intro = "<!doctype html>" + "<html>" + "<body>" + "<ul>"
         end = "</ul>" + "</body>" + "</html>"
         with open("empty.html", 'w') as f:
             f.write(intro)
-            for element in list:
+            for element in parser:
                 f.write("<li>" + element + "</li>")
             f.write(end)
         with open('empty.html', 'r') as f:
             file = f.read()
-            self.wfile.write(bytes(file, "utf8"))
+
 
 class testHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
@@ -68,15 +63,16 @@ class testHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             else:
                 first_param = self.path.split("=")[1]
                 limit = 10
-            client.url_search(first_param, limit)
+            drugs = client.url_search(first_param, limit)
             if "searchDrug" in self.path:
                 path = 'active_ingredient'
                 path1 = ''
             elif "searchCompany" in self.path:
                 path = 'openfda'
                 path1 = 'manufacturer_name'
-            parser.get_data(drugs, path)
-            HTML.write_data()
+            parser = parser.get_data(drugs, path)
+            file = HTML.write_data(parser)
+            self.wfile.write(bytes(file, "utf8"))
 
 
 
