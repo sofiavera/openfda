@@ -11,7 +11,7 @@ class OpenFDAClient():
     def url_search(self, first_param, limit):
         headers = {'User-Agent': 'http-client'}
         conn = http.client.HTTPSConnection("api.fda.gov")
-        url = "/drug/label.json?search=" + first_param + "=" + limit
+        url = "/drug/label.json?search=" + choice first_param + "=" + limit
         conn.request("GET", url, None, headers)
         r1 = conn.getresponse()
         drugs_raw = r1.read().decode("utf-8")

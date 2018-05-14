@@ -17,6 +17,7 @@ class testHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                     message = f.read()
                     self.wfile.write(bytes(message, "utf8"))
             elif "searchDrug" in self.path:
+                print(self.path)
                 headers = {'User-Agent': 'http-client'}
                 conn = http.client.HTTPSConnection("api.fda.gov")
                 input = self.path.split("=")
