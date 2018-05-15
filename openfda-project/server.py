@@ -3,9 +3,10 @@ import socketserver
 import http.client
 import json
 
-socketserver.TCPServer.allow_reuse_address = True
 IP = "localhost"
 PORT = 8000
+socketserver.TCPServer.allow_reuse_address = True
+
 
 class testHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
@@ -133,11 +134,11 @@ class testHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                 search = json.loads(drugs_raw)
 
                 list=[]
-                try:
-                    for i in range(len(search['results'])):
+                for i in range(len(search['results'])):
+                    try:
                         list.append(search['results'][i]['active_ingredient'][0])
-                except KeyError:
-                    list.append("Unknown")
+                    except KeyError:
+                        list.append("Unknown")
 
                 intro = "<!doctype html>" + "<html>" + "<body>" + "<ul>"
                 end = "</ul>" + "</body>" + "</html>"
@@ -157,7 +158,8 @@ class testHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                 conn = http.client.HTTPSConnection("api.fda.gov")
 
                 input = self.path.split("=")
-                if "&" in input[0]:
+
+                if "limit" in input[0]:
                     if input[1] == '':
                         limit = '10'
                     else:
@@ -176,11 +178,12 @@ class testHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                 search = json.loads(drugs_raw)
 
                 list=[]
-                try:
-                    for i in range(len(search['results'])):
+                for i in range(len(search['results'])):
+                    try:
                         list.append(search['results'][i]['openfda']['manufacturer_name'][0])
-                except KeyError:
-                    list.append("Unknown")
+                    except KeyError:
+                        list.append("Unknown")
+
 
                 intro = "<!doctype html>" + "<html>" + "<body>" + "<ul>"
                 end = "</ul>" + "</body>" + "</html>"
@@ -200,7 +203,7 @@ class testHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                 conn = http.client.HTTPSConnection("api.fda.gov")
 
                 input = self.path.split("=")
-                if "&" in input[0]:
+                if "limit" in input[0]:
                     if input[1] == '':
                         limit = '10'
                     else:
